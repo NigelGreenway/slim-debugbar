@@ -1,20 +1,25 @@
-<?php namespace Slim\Middleware;
+<?php
+
+namespace Slim\Middleware;
 
 use DebugBar\DataCollector\DataCollectorInterface;
 use DebugBar\HttpDriverInterface;
 use DebugBar\OpenHandler;
 use DebugBar\SlimDebugBar;
 use DebugBar\SlimHttpDriver;
-use DebugBar\Storage\FileStorage;
 use DebugBar\Storage\StorageInterface;
-use Slim\Middleware;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Slim\Http\Request;
+use Slim\Http\Response;
+use Slim\Route;
 
-class DebugBar extends Middleware
+final class DebugBar
 {
     /**
      * Slim Application instance
      *
-     * @var \Slim\Slim
+     * @var \Slim\App
      */
     protected $app;
 
@@ -61,84 +66,81 @@ class DebugBar extends Middleware
         $this->debugbar = $debugbar;
     }
 
-    public function call()
+    public function __invoke(Request $request, ResponseInterface $response, callable $next)
     {
+        $this->app   = $next;
         $this->prepareDebugBar();
 
-        $httpDriver = $this->httpDriver ?: new SlimHttpDriver($this->app);
+        $httpDriver = $this->httpDriver ?: new SlimHttpDriver($response);
         $this->debugbar->setHttpDriver($httpDriver);
 
-        $this->setAssetsRoute();
+        $response = $next($request, $response);
 
-        $this->next->call();
+        $this->prepareAfterRouteDebugBar($response, $request, $request->getAttribute('route'));
 
-        if ($this->isAssetsRoute()) {
-            return;
-        }
-
-        if ($this->app->request->isAjax()) {
+        if ($request->isXhr()) {
             if ($this->debugbar->getStorage()) {
                 $this->debugbar->sendDataInHeaders($useOpenHandler = true);
             }
-            return;
+            return $response;
         }
 
-        if ( ! $this->isModifiable()) {
-            return;
+        if ( ! $this->isModifiable($response)) {
+            return $response;
         }
 
-        $html = $this->app->response->body();
-        $this->app->response->body($this->modifyResponse($html));
+        if (! $this->isAsset($request)) {
+            $html = $response->getBody();
+            $response->write($this->getDebugHtml($request));
+        }
+
+        return $response;
     }
 
-    public function isModifiable()
+    public function isModifiable(ResponseInterface $response)
     {
-        if ($this->app->response->isRedirect()) {
+        if ($response->isRedirect()) {
             if ($this->debugbar->getHttpDriver()->isSessionStarted()) {
                 $this->debugbar->stackData();
             }
             return false;
         }
 
-        if ( ! $this->isHtmlResponse()) {
+        if ( ! $this->isHtmlResponse($response)) {
             return false;
         }
 
         return true;
     }
 
-    public function isHtmlResponse()
+    public function isAsset(Request $request)
     {
-        $content_type = $this->app->response->header('Content-Type');
+        $route = $request->getAttribute('route', null);
+
+        if ($route !== null) {
+            if (strstr($route->getName(), 'debugbar') !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isHtmlResponse(ResponseInterface $response)
+    {
+        $content_type = $response->getHeader('Content-Type')[0];
 
         return (stripos($content_type, 'html') !== false);
     }
 
-    /**
-     * @param string $html
-     * @return string
-     */
-    public function modifyResponse($html)
-    {
-        $debug_html = $this->getDebugHtml();
-        $pos = mb_strripos($html, '</body>');
-        if ($pos === false) {
-            $html .= $debug_html;
-        } else {
-            $html = mb_substr($html, 0, $pos) . $debug_html . mb_substr($html, $pos);
-        }
-
-        return $html;
-    }
-
-    public function getDebugHtml()
+    public function getDebugHtml(RequestInterface $request)
     {
         $renderer = $this->debugbar->getJavascriptRenderer();
         if ($this->debugbar->getStorage()) {
-            $renderer->setOpenHandlerUrl($this->app->router->urlFor('debugbar.openhandler'));
+            $renderer->setOpenHandlerUrl($this->app->getConter()->get('router')->urlFor('debugbar.openhandler'));
         }
 
-        $html = $this->getAssetsHtml();
+        $html = $this->getAssetsHtml($request);
         if ($renderer->isJqueryNoConflictEnabled()) {
             $html .= "\n" . '<script type="text/javascript">jQuery.noConflict(true);</script>';
         }
@@ -146,74 +148,34 @@ class DebugBar extends Middleware
         return $html . "\n" . $renderer->render();
     }
 
-    public function getAssetsHtml()
+    public function getAssetsHtml(RequestInterface $request)
     {
-        $root = $this->app->request()->getScriptName();
+        $root = $request->getServerParams()['SCRIPT_NAME'];
         return '<script type="text/javascript" src="' . $root . '/_debugbar/resources/dump.js"></script>' .
-            '<link rel="stylesheet" type="text/css" href="' . $root . '/_debugbar/resources/dump.css">';
+        '<link rel="stylesheet" type="text/css" href="' . $root . '/_debugbar/resources/dump.css">';
     }
 
     protected function prepareDebugBar()
     {
         if ($this->debugbar instanceof SlimDebugBar) {
-            $this->debugbar->initCollectors($this->app);
+            $this->debugbar->initCollectorsBeforeRoute($this->app);
         }
-        $storage = $this->app->config('debugbar.storage');
+        $storage = $this->app->getContainer()->get('settings')['debugbar.storage'];
         if ($storage instanceof StorageInterface) {
             $this->debugbar->setStorage($storage);
         }
         // add debugbar to Slim IoC container
-        $this->app->container->set('debugbar', $this->debugbar);
+        $container = $this->app->getContainer();
+        $container['debugbar'] = function($this) {
+            return $this->debugbar;
+        };
     }
 
-    protected function setAssetsRoute()
+    protected function prepareAfterRouteDebugBar(Response $response, Request $request, Route $route = null)
     {
-        $renderer = $this->debugbar->getJavascriptRenderer();
-        $this->app->get('/_debugbar/fonts/:file', function($file) use ($renderer)
-        {
-            // e.g. $file = fontawesome-webfont.woff?v=4.0.3
-            $files = explode('?', $file);
-            $file = reset($files);
-            $path = $renderer->getBasePath() . '/vendor/font-awesome/fonts/' . $file;
-            if (file_exists($path)) {
-                $this->app->response->header('Content-Type', (new \finfo(FILEINFO_MIME))->file($path));
-                echo file_get_contents($path);
-            } else {
-                // font-awesome.css referencing fontawesome-webfont.woff2 but not include in the php-debugbar.
-                // It is not slim-debugbar bug.
-                $this->app->notFound();
-            }
-        })->name('debugbar.fonts');
-        $this->app->get('/_debugbar/resources/:file', function($file) use ($renderer)
-        {
-            $files = explode('.', $file);
-            $ext = end($files);
-            if ($ext === 'css') {
-                $this->app->response->header('Content-Type', 'text/css');
-                $renderer->dumpCssAssets();
-            } elseif ($ext === 'js') {
-                $this->app->response->header('Content-Type', 'text/javascript');
-                $renderer->dumpJsAssets();
-            }
-        })->name('debugbar.resources');
-        $this->app->get('/_debugbar/openhandler', function()
-        {
-            $openHandler = new OpenHandler($this->debugbar);
-            $data = $openHandler->handle($request = null, $echo = false, $sendHeader = false);
-            $this->app->response->header('Content-Type', 'application/json');
-            $this->app->response->setBody($data);
-        })->name('debugbar.openhandler');
-    }
-
-    protected function isAssetsRoute()
-    {
-        $route = $this->app->router->getCurrentRoute();
-
-        if ($route) {
-            $name = $route->getName();
-            return (explode('.', $name)[0] === 'debugbar');
+        if ($this->debugbar instanceof SlimDebugBar) {
+            $this->debugbar->initCollectorsAfterRoute($this->app, $response, $request, $route);
         }
-
-        return false;
     }
+
 }

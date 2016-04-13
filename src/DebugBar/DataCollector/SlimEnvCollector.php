@@ -1,22 +1,22 @@
 <?php namespace DebugBar\DataCollector;
 
-use Slim\Slim;
+use Slim\App;
 
 class SlimEnvCollector extends DataCollector implements Renderable
 {
     /**
-     * @var \Slim\Slim
+     * @var App $app
      */
-    protected $slim;
+    protected $app;
 
-    public function __construct(Slim $slim)
+    public function __construct(App $app)
     {
-        $this->slim = $slim;
+        $this->app = $app;
     }
 
     public function collect()
     {
-        return $this->slim->getMode();
+        return 'Versions';
     }
 
     public function getName()
@@ -26,7 +26,7 @@ class SlimEnvCollector extends DataCollector implements Renderable
 
     public function getWidgets()
     {
-        $slim_version = Slim::VERSION;
+        $slim_version = App::VERSION;
         $php_version = PHP_VERSION;
         return [
             'mode' => [

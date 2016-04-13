@@ -1,6 +1,9 @@
 <?php namespace DebugBar;
 
-use Slim\Slim;
+use DebugBar\Bridge\Twig\TraceableTwigEnvironment;
+use DebugBar\Bridge\Twig\TwigCollector;
+use DebugBar\DataCollector\PDO\PDOCollector;
+use Slim\App;
 use DebugBar\DataCollector\ConfigCollector;
 use DebugBar\DataCollector\MemoryCollector;
 use DebugBar\DataCollector\RequestDataCollector;
@@ -20,19 +23,23 @@ class SlimDebugBar extends DebugBar
         $this->addCollector(new MemoryCollector());
     }
 
-    public function initCollectors(Slim $slim)
+    public function initCollectorsBeforeRoute(App $slim)
     {
-        $this->addCollector(new SlimLogCollector($slim));
         $this->addCollector(new SlimEnvCollector($slim));
-        $slim->hook('slim.after.router', function() use ($slim)
-        {
-            $setting = $this->prepareRenderData($slim->container['settings']);
-            $data = $this->prepareRenderData($slim->view->all());
-            $this->addCollector(new SlimResponseCollector($slim->response));
-            $this->addCollector(new ConfigCollector($setting));
-            $this->addCollector(new SlimViewCollector($data));
-            $this->addCollector(new SlimRouteCollector($slim));
-        });
+    }
+
+    public function initCollectorsAfterRoute(App $slim, $response, $request, $route = null)
+    {
+        $container = $slim->getContainer();
+
+        $setting = $this->prepareRenderData($container->get('settings')->all());
+
+        $this->addCollector(new ConfigCollector($setting));
+
+        $this->addCollector(new SlimResponseCollector($response));
+
+        $this->addCollector(new SlimRouteCollector($request, $route));
+
     }
 
     protected function prepareRenderData(array $data = [])

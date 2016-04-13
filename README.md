@@ -46,6 +46,10 @@ $debugbar = new \Slim\Middleware\DebugBar();
 // or use custom debugbar
 //  $debugbar->setDebugBar(new MyCustomDebugBar());
 $slim->add($debugbar);
+
+$routes = new \Slim\Middleware\DebugBarRoutes($app);
+$routes->registerRoutes();
+
 $slim->get('/', function()
 {
     echo 'Hello world!';

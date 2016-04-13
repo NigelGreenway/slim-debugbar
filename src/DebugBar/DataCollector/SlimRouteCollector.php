@@ -1,20 +1,27 @@
 <?php namespace DebugBar\DataCollector;
 
-use Slim\Slim;
+use Slim\App;
+use Slim\Http\Request;
+use Slim\Route;
+use Slim\Router;
 
 class SlimRouteCollector extends ConfigCollector
 {
     /**
-     * @var \Slim\Slim
+     * @var Request
      */
-    protected $slim;
+    protected $request;
+
+    /** @var Route $route */
+    protected $route;
 
     /**
-     * @param Slim $slim
+     * @param App $app
      */
-    public function __construct(Slim $slim)
+    public function __construct(Request $request, Route $route = null)
     {
-        $this->slim = $slim;
+        $this->request = $request;
+        $this->route = $route;
         $this->setData($this->getRouteInfo());
     }
 
@@ -25,17 +32,17 @@ class SlimRouteCollector extends ConfigCollector
 
     public function getRouteInfo()
     {
-        // if slim.after.router fired, route is not null
-        $route = $this->slim->router->getCurrentRoute();
-        $method = $this->slim->request->getMethod();
-        $path = $this->slim->request->getPathInfo();
+        $route = $this->route;
+        $method = $this->request->getMethod();
+        $path = $this->request->getUri()->getPath();
         $uri = $method . ' ' . $path;
         return [
+            'id' => $route->getIdentifier() ?: '-',
             'uri' => $uri,
             'pattern' => $route->getPattern(),
-            'params' => $route->getParams() ?: '-',
+            'arguments' => $route->getArguments() ?: '-',
             'name' => $route->getName() ?: '-',
-            'conditions' => $route->getConditions() ?: '-',
+            'groups' => $route->getGroups() ?: '-',
         ];
     }
 

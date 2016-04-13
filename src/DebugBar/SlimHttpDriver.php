@@ -1,23 +1,23 @@
 <?php namespace DebugBar;
 
-use Slim\Slim;
+use Slim\Http\Response;
 
 class SlimHttpDriver extends PhpHttpDriver
 {
     /**
-     * @var Slim
+     * @var Response
      */
-    protected $slim;
+    protected $response;
 
-    public function __construct(Slim $slim)
+    public function __construct(Response $response)
     {
-        $this->slim = $slim;
+        $this->response = $response;
     }
 
     public function setHeaders(array $headers)
     {
         foreach ($headers as $key => $val) {
-            $this->slim->response->header($key, $val);
+            $this->response->withHeader($key, $val);
         }
     }
 }
