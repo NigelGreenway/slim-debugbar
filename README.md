@@ -36,25 +36,31 @@ example
 ```php
 <?php
 require '/path/to/vendor/autoload.php';
-$config = [];
+
+//This is needed to determine the route before middleware.
+$config = [
+    'settings' => [
+        'determineRouteBeforeAppMiddleware' => true,
+    ]
+];
 // if you want to capture ajax requests, set instance of StorageInterface implemented.
 // $config['debugbar.storage'] = new \DebugBar\Storage\FileStorage('/path/to/storage');
-$slim = new \Slim\Slim($config);
+$app = new \Slim\App($config);
 $debugbar = new \Slim\Middleware\DebugBar();
 // you can add custom collectors
 //  $debugbar->addCollector(new MyCustomCollector());
 // or use custom debugbar
 //  $debugbar->setDebugBar(new MyCustomDebugBar());
-$slim->add($debugbar);
+$app->add($debugbar);
 
 $routes = new \Slim\Middleware\DebugBarRoutes($app);
 $routes->registerRoutes();
 
-$slim->get('/', function()
+$app->get('/', function()
 {
     echo 'Hello world!';
 });
-$slim->run();
+$app->run();
 ```
 
 ### Notice
