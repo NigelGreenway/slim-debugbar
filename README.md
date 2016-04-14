@@ -53,7 +53,7 @@ $debugbar = new \Slim\Middleware\DebugBar();
 //  $debugbar->setDebugBar(new MyCustomDebugBar());
 $app->add($debugbar);
 
-$routes = new \Slim\Middleware\DebugBarRoutes($app);
+$routes = new \Slim\Routes\DebugBarRoutes($app);
 $routes->registerRoutes();
 
 $app->get('/', function()

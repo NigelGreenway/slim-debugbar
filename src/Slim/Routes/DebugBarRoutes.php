@@ -1,6 +1,6 @@
 <?php
 
-namespace Slim\Middleware;
+namespace Slim\Routes;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
