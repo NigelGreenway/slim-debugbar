@@ -27,8 +27,13 @@ class SlimDebugBar extends DebugBar
         $this->addCollector(new MemoryCollector());
     }
 
-    public function initCollectorsBeforeRoute(App $app)
+    public function initCollectorsBeforeRoute(App $app, $config)
     {
+        if ($this->isLoggerEnabled($config)) {
+            $logger = $app->getContainer()->get($config['logger']);
+            $this->addCollector(new MonologCollector($logger));
+        }
+
         $this->addCollector(new SlimEnvCollector($app));
     }
 
@@ -44,6 +49,11 @@ class SlimDebugBar extends DebugBar
 
         $this->addCollector(new SlimRouteCollector($request, $route));
 
+    }
+
+    protected function isLoggerEnabled($config)
+    {
+        return array_key_exists('logger', $config);
     }
 
     protected function prepareRenderData(array $data = [])
