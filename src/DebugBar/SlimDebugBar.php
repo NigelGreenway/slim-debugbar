@@ -19,6 +19,9 @@ class SlimDebugBar extends DebugBar
     public function __construct()
     {
         $this->addCollector(new TimeDataCollector());
+        $collector = $this->getCollector('time');
+        $collector->startMeasure('application', 'Application');
+
         $this->addCollector(new RequestDataCollector());
         $this->addCollector(new MemoryCollector());
     }
