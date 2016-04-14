@@ -61,7 +61,7 @@ $container['log'] = function ($c) {
 2) Configure a new array $config = ['logger' => 'logger'];
     - KEY IS REQUIRED, MUST BE LOGGER
     - Value is the service of the logger (Ex.: $container['log'] = log)
-3) Change $debugbar = new \Slim\Middleware\DebugBar($config);
+3) Change $debugbar = new \Slim\Middleware\DebugBar(null, $config);
 */
 $debugbar = new \Slim\Middleware\DebugBar();
 // you can add custom collectors
