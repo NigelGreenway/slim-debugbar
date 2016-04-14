@@ -2,7 +2,9 @@
 
 use DebugBar\Bridge\Twig\TraceableTwigEnvironment;
 use DebugBar\Bridge\Twig\TwigCollector;
+use DebugBar\DataCollector\MessagesCollector;
 use DebugBar\DataCollector\PDO\PDOCollector;
+use DebugBar\DataCollector\PhpInfoCollector;
 use Slim\App;
 use DebugBar\DataCollector\ConfigCollector;
 use DebugBar\DataCollector\MemoryCollector;
@@ -22,7 +24,9 @@ class SlimDebugBar extends DebugBar
         $collector = $this->getCollector('time');
         $collector->startMeasure('application', 'Application');
 
+        $this->addCollector(new MessagesCollector());
         $this->addCollector(new RequestDataCollector());
+        $this->addCollector(new PhpInfoCollector());
         $this->addCollector(new MemoryCollector());
     }
 
