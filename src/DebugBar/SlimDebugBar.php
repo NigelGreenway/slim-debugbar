@@ -2,6 +2,7 @@
 
 namespace DebugBar;
 
+use DebugBar\Bridge\MonologCollector;
 use DebugBar\DataCollector\MessagesCollector;
 use DebugBar\DataCollector\PhpInfoCollector;
 use Slim\App;
