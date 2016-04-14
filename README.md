@@ -46,6 +46,23 @@ $config = [
 // if you want to capture ajax requests, set instance of StorageInterface implemented.
 // $config['debugbar.storage'] = new \DebugBar\Storage\FileStorage('/path/to/storage');
 $app = new \Slim\App($config);
+
+/*
+
+To use the logger in the debug bar
+1) register as a service
+$container['log'] = function ($c) {
+    $settings = $c->get('settings')['logger'];
+    $logger = new Monolog\Logger($settings['name']);
+    $logger->pushProcessor(new Monolog\Processor\UidProcessor());
+    $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], Monolog\Logger::DEBUG));
+    return $logger;
+};
+2) Configure a new array $config = ['logger' => 'logger'];
+    - KEY IS REQUIRED, MUST BE LOGGER
+    - Value is the service of the logger (Ex.: $container['log'] = log)
+3) Change $debugbar = new \Slim\Middleware\DebugBar($config);
+*/
 $debugbar = new \Slim\Middleware\DebugBar();
 // you can add custom collectors
 //  $debugbar->addCollector(new MyCustomCollector());
@@ -64,8 +81,6 @@ $app->run();
 ```
 
 ### Notice
-  * Please use real httpd (apache, nginx etc...)
-      - PHP builtin server does not supported.
   * Available storage for ajax capturing
       - Filesystem, PDO and Redis
       - for more information, please refer to [the official document](http://phpdebugbar.com/docs/storage.html).
