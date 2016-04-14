@@ -35,10 +35,16 @@ final class DebugBar
      */
     protected $httpDriver;
 
-    public function __construct(HttpDriverInterface $HttpDriver = null)
+    /**
+     * @var array
+     */
+    protected $config;
+
+    public function __construct(HttpDriverInterface $HttpDriver = null, array $config = [])
     {
         $this->httpDriver = $HttpDriver;
         $this->debugbar = new SlimDebugBar();
+        $this->config = $config;
     }
 
     /**
@@ -157,7 +163,7 @@ final class DebugBar
     protected function prepareDebugBar()
     {
         if ($this->debugbar instanceof SlimDebugBar) {
-            $this->debugbar->initCollectorsBeforeRoute($this->app);
+            $this->debugbar->initCollectorsBeforeRoute($this->app, $this->config);
         }
         $storage = $this->app->getContainer()->get('settings')['debugbar.storage'];
         if ($storage instanceof StorageInterface) {
