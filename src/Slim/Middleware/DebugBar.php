@@ -90,7 +90,6 @@ final class DebugBar
         }
 
         if (! $this->isAsset($request)) {
-            $html = $response->getBody();
             $response->write($this->getDebugHtml($request));
         }
 
