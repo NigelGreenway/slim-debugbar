@@ -1,9 +1,10 @@
-<?php namespace DebugBar\DataCollector;
+<?php
+
+namespace DebugBar\DataCollector;
 
 use Slim\App;
 use Slim\Http\Request;
 use Slim\Route;
-use Slim\Router;
 
 class SlimRouteCollector extends ConfigCollector
 {
@@ -16,7 +17,9 @@ class SlimRouteCollector extends ConfigCollector
     protected $route;
 
     /**
-     * @param App $app
+     * SlimRouteCollector constructor.
+     * @param Request $request
+     * @param Route|null $route
      */
     public function __construct(Request $request, Route $route = null)
     {

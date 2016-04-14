@@ -1,9 +1,8 @@
-<?php namespace DebugBar;
+<?php
 
-use DebugBar\Bridge\Twig\TraceableTwigEnvironment;
-use DebugBar\Bridge\Twig\TwigCollector;
+namespace DebugBar;
+
 use DebugBar\DataCollector\MessagesCollector;
-use DebugBar\DataCollector\PDO\PDOCollector;
 use DebugBar\DataCollector\PhpInfoCollector;
 use Slim\App;
 use DebugBar\DataCollector\ConfigCollector;
@@ -11,10 +10,8 @@ use DebugBar\DataCollector\MemoryCollector;
 use DebugBar\DataCollector\RequestDataCollector;
 use DebugBar\DataCollector\TimeDataCollector;
 use DebugBar\DataCollector\SlimEnvCollector;
-use DebugBar\DataCollector\SlimLogCollector;
 use DebugBar\DataCollector\SlimResponseCollector;
 use DebugBar\DataCollector\SlimRouteCollector;
-use DebugBar\DataCollector\SlimViewCollector;
 
 class SlimDebugBar extends DebugBar
 {
@@ -30,14 +27,14 @@ class SlimDebugBar extends DebugBar
         $this->addCollector(new MemoryCollector());
     }
 
-    public function initCollectorsBeforeRoute(App $slim)
+    public function initCollectorsBeforeRoute(App $app)
     {
-        $this->addCollector(new SlimEnvCollector($slim));
+        $this->addCollector(new SlimEnvCollector($app));
     }
 
-    public function initCollectorsAfterRoute(App $slim, $response, $request, $route = null)
+    public function initCollectorsAfterRoute(App $app, $response, $request, $route = null)
     {
-        $container = $slim->getContainer();
+        $container = $app->getContainer();
 
         $setting = $this->prepareRenderData($container->get('settings')->all());
 

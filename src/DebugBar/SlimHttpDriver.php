@@ -1,4 +1,6 @@
-<?php namespace DebugBar;
+<?php
+
+namespace DebugBar;
 
 use Slim\Http\Response;
 

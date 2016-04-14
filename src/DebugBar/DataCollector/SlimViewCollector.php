@@ -1,4 +1,6 @@
-<?php namespace DebugBar\DataCollector;
+<?php
+
+namespace DebugBar\DataCollector;
 
 class SlimViewCollector extends ConfigCollector
 {

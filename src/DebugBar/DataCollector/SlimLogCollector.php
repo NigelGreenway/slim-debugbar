@@ -1,4 +1,6 @@
-<?php namespace DebugBar\DataCollector;
+<?php
+
+namespace DebugBar\DataCollector;
 
 use DebugBar\Bridge\SlimCollector;
 
