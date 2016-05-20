@@ -39,14 +39,23 @@ class SlimRouteCollector extends ConfigCollector
         $method = $this->request->getMethod();
         $path = $this->request->getUri()->getPath();
         $uri = $method . ' ' . $path;
-        return [
-            'id' => $route->getIdentifier() ?: '-',
-            'uri' => $uri,
-            'pattern' => $route->getPattern(),
-            'arguments' => $route->getArguments() ?: '-',
-            'name' => $route->getName() ?: '-',
-            'groups' => $route->getGroups() ?: '-',
-        ];
+
+        if ($route) {
+            $data = [
+                'id' => $route->getIdentifier() ?: '-',
+                'uri' => $uri,
+                'pattern' => $route->getPattern(),
+                'arguments' => $route->getArguments() ?: '-',
+                'name' => $route->getName() ?: '-',
+                'groups' => $route->getGroups() ?: '-',
+            ];
+        } else {
+            $data = [
+                'route' => 'None Found'
+            ];
+        }
+
+        return array_merge($data, ['uri' => $uri]);
     }
 
     public function getWidgets()
