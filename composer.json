@@ -1,5 +1,5 @@
 {
-    "name": "yusukezzz/slim-debugbar",
+    "name": "nigelgreenway/slim-debugbar",
     "license": "MIT",
     "keywords": ["slim", "middleware", "debugbar"],
     "require": {
